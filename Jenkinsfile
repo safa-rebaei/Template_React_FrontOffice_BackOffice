@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         IMAGE = "rebaeisafa/react-front"
-        TAG   = "latest"
+        TAG   = "${BUILD_NUMBER}"
+        DOCKER_BUILDKIT = "0"
     }
 
     stages {
@@ -14,9 +15,10 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Docker Build') {
             steps {
-                bat "docker build -t %IMAGE%:%TAG% ."
+                bat 'docker version'
+                bat 'docker build -t %IMAGE%:%TAG% .'
             }
         }
 
@@ -29,21 +31,12 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    bat """
+                    bat '''
                     echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
                     docker push %IMAGE%:%TAG%
-                    """
+                    '''
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo '✅ Image Docker créée et poussée automatiquement'
-        }
-        failure {
-            echo '❌ Pipeline échoué'
         }
     }
 }
