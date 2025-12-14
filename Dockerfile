@@ -1,30 +1,37 @@
-# ===== Build React =====
-FROM node:16-alpine AS build
+# Utilisez Node 18+ au lieu de 16 (plus récent et mieux supporté)
+FROM node:18-alpine AS build
+
+# Définir le registre npm en global dans l'image
+RUN npm config set registry https://registry.npmjs.org/
 
 WORKDIR /app
 
-# Copier les fichiers de dépendances
+# Copier d'abord les fichiers de dépendances
 COPY package.json package-lock.json* ./
-RUN npm config set registry https://registry.npmjs.org/ \
- && npm config set fetch-retries 5 \
- && npm config set fetch-retry-mintimeout 20000 \
- && npm config set fetch-retry-maxtimeout 120000 \
- && npm install --legacy-peer-deps
+
+# Installer avec retry et timeout augmenté
+RUN npm install --legacy-peer-deps \
+    --fetch-retries=5 \
+    --fetch-retry-factor=2 \
+    --fetch-retry-mintimeout=10000 \
+    --fetch-retry-maxtimeout=60000 \
+    --fetch-timeout=120000
 
 # Copier le reste du code
 COPY . .
 
-# Builder l'application
+# Build l'application React
 RUN npm run build
 
-# ===== Serve avec Nginx =====
-FROM nginx:1.25-alpine
+# Étape de production
+FROM nginx:alpine
 
-# Copier le build React dans le dossier Nginx
+# Copier les fichiers buildés
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Exposer le port 80
+# Copier une configuration nginx personnalisée si nécessaire
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 
-# Lancer Nginx en avant-plan
 CMD ["nginx", "-g", "daemon off;"]
