@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE = "rebaeisafa/react-front"
         TAG   = "${BUILD_NUMBER}"
-        DOCKER_BUILDKIT = "0"
+        DOCKER_BUILDKIT = "1"
     }
 
     stages {
