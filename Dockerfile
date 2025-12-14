@@ -5,9 +5,11 @@ WORKDIR /app
 
 # Copier les fichiers de dépendances
 COPY package.json package-lock.json* ./
-
-# Installer les dépendances avec timeout et registry
-RUN npm install --legacy-peer-deps --fetch-timeout=60000 --registry=https://registry.npmjs.org/
+RUN npm config set registry https://registry.npmjs.org/ \
+ && npm config set fetch-retries 5 \
+ && npm config set fetch-retry-mintimeout 20000 \
+ && npm config set fetch-retry-maxtimeout 120000 \
+ && npm install --legacy-peer-deps
 
 # Copier le reste du code
 COPY . .
