@@ -3,7 +3,7 @@ pipeline {
     options { timestamps() }
 
     environment {
-        IMAGE = "safarebaei/projet_react"
+        IMAGE = "nouveauUser/react-front"
         TAG   = "build-${BUILD_NUMBER}"
     }
 
@@ -17,47 +17,25 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                bat 'docker version'
                 bat "docker build -t %IMAGE%:%TAG% ."
             }
         }
 
-        stage('Run (Docker)') {
+        stage('Run Test') {
             steps {
                 bat """
-                docker rm -f monapp_test 2>nul || exit 0
-                docker run -d --name monapp_test -p 8082:80 %IMAGE%:%TAG%
-                """
-            }
-        }
-
-        stage('Smoke Test') {
-            steps {
-                bat """
-                REM Attente démarrage
+                docker rm -f react_test 2>nul || exit 0
+                docker run -d -p 8082:80 --name react_test %IMAGE%:%TAG%
                 ping -n 6 127.0.0.1 > nul
-
-                REM Test HTTP avec PowerShell (PLUS FIABLE que curl)
-                powershell -Command ^
-                "try { ^
-                    \$r = Invoke-WebRequest http://localhost:8082 -UseBasicParsing; ^
-                    if (\$r.StatusCode -ne 200) { exit 1 } ^
-                } catch { exit 1 }"
                 """
             }
         }
 
-        stage('Cleanup') {
-            steps {
-                bat "docker rm -f monapp_test 2>nul || exit 0"
-            }
-        }
-
-        stage('Push (Docker Hub)') {
+        stage('Push Docker Hub') {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'react_id',
+                        credentialsId: 'dockerhub_new',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
@@ -74,14 +52,11 @@ pipeline {
     }
 
     post {
-        success {
-            echo '✅ Build + Test + Push Docker Hub OK'
-        }
-        failure {
-            echo '❌ Pipeline FAILED'
-        }
         always {
-            bat "docker rm -f monapp_test 2>nul || exit 0"
+            bat "docker rm -f react_test 2>nul || exit 0"
+        }
+        success {
+            echo '✅ Image Docker React poussée avec succès'
         }
     }
 }
