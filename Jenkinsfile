@@ -3,7 +3,7 @@ pipeline {
     options { timestamps() }
 
     environment {
-        IMAGE = "safarebaei/monapp"
+        IMAGE = "safarebaei/projet_react"
         TAG   = "build-${BUILD_NUMBER}"
     }
 
@@ -34,10 +34,15 @@ pipeline {
         stage('Smoke Test') {
             steps {
                 bat """
-                REM Attente pour que le conteneur démarre
-                ping -n 5 127.0.0.1 > nul
-                REM Vérification HTTP 200 OK
-                curl -I http://localhost:8082 | find "200 OK"
+                REM Attente démarrage
+                ping -n 6 127.0.0.1 > nul
+
+                REM Test HTTP avec PowerShell (PLUS FIABLE que curl)
+                powershell -Command ^
+                "try { ^
+                    \$r = Invoke-WebRequest http://localhost:8082 -UseBasicParsing; ^
+                    if (\$r.StatusCode -ne 200) { exit 1 } ^
+                } catch { exit 1 }"
                 """
             }
         }
@@ -70,7 +75,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build + Smoke Test + Push Docker Hub OK'
+            echo '✅ Build + Test + Push Docker Hub OK'
         }
         failure {
             echo '❌ Pipeline FAILED'
