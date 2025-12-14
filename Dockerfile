@@ -1,9 +1,9 @@
-# ===== Build React (Node compatible avec react-scripts 4) =====
-FROM node:14-alpine AS build
+# ===== Build React =====
+FROM node:16-alpine AS build
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json package-lock.json* ./
 
 RUN npm install --legacy-peer-deps
 
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 # ===== Serve avec Nginx =====
-FROM nginx:alpine
+FROM nginx:1.25-alpine
 
 COPY --from=build /app/build /usr/share/nginx/html
 
