@@ -1,0 +1,20 @@
+# Node modules locaux (très volumineux)
+node_modules
+
+# Dossier Git (inutiles pour l'image)
+.git
+.gitignore
+
+# Logs
+*.log
+
+# Build local (si tu veux le reconstruire dans Docker, sinon à laisser)
+build
+dist
+
+# Configs Docker que tu ne veux pas copier
+docker-compose.yml
+
+# En général, fichiers système ou IDE
+.DS_Store
+*.env
